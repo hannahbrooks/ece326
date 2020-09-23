@@ -4,9 +4,15 @@
 #
 # starts interactive shell for testing the EasyDB driver
 #
+#
+# python3 main.py run "host_name" port_number
+#
+#
 
 import easydb
 from easydb import operator
+
+
 
 tb = (
     ("User", (                  # table_name
@@ -36,9 +42,9 @@ def main():
 
     if len(args) >= 2 and args[1] == "run":
         import code
-        host = args.get(2, "localhost")
+        host = args.get(2, "127.0.0.1")
         port = args.get(3, 8080)
-                
+
         # create db object
         db = easydb.Database(tb)
         
@@ -51,7 +57,7 @@ def main():
         db.connect(host, port)
         
         # start interactive mode
-        code.interact(local=items)
+        # code.interact(local=items)
         
         # close database connection
         db.close()
