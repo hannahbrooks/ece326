@@ -7,9 +7,11 @@
 
 import socket
 import ctypes
+import math
 import sys
 import io
 import struct
+from .exception import *
 
 class Database:
     def __repr__(self):
@@ -55,17 +57,30 @@ class Database:
     # @param values: list of values to be inserted 
     def insert(self, table_name, values):
 
+        # Table does not exist
+        if table_name not in self.table_names:
+            raise PacketError(3)                # BAD_TABLE
+        
         # Initial variables set
-        table = 1 if table_name == "User" else 2
+        table = self.table_names.index(table_name)
+
+        # Row does not have enough column values
+        if (len(self.tables[table][1]) != len(values)):
+            raise PacketError(7)                # BAD_ROW
+
         values_list = []
         packet_types = ""
-
         # Set packet bytes for values paramater 
         for i in range(0,len(values)):
+
+            # Column value is not of correct type 
+            if (type(values[i]) is not self.tables[table][1][i][1]):
+                raise PacketError(6)            # BAD_VALUE
+
             buf = "none"
             if (type(values[i]) is str):
                 typ = 3 
-                size = 4
+                size = 4 * math.ceil(len(values[i])/4)
                 buf = str.encode(values[i])
                 packet_char = 'p'
             elif (type(values[i]) is int):
@@ -91,7 +106,8 @@ class Database:
         self.socket.send(req)
 
         # Receieve request
-        response = struct.unpack('>i', self.socket.recv(1024))
+        response = struct.unpack('>i', self.socket.recv(4096))
+        print((response))
                 
     def update(self, table_name, pk, values, version=None):
         # TODO: implement me
