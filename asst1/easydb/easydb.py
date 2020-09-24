@@ -11,7 +11,13 @@ import sys
 import io
 import struct
 
+
+
 class Database:
+
+    def get_table_id(self, table_name):
+        return self.table_names.index(table_name)
+
     def __repr__(self):
         return "<EasyDB Database object>"
 
@@ -56,41 +62,42 @@ class Database:
     def insert(self, table_name, values):
 
         # Initial variables set
-        table = 1 if table_name == "User" else 2
+        table = get_table_id(table_name)
         values_list = []
         packet_types = ""
 
         # Set packet bytes for values paramater 
-        for i in range(0,len(values)):
+        for value in values:
             buf = "none"
-            if (type(values[i]) is str):
+            if (type(value) is str):
                 typ = 3 
                 size = 4
-                buf = str.encode(values[i])
+                buf = str.encode(value)
                 packet_char = 'p'
-            elif (type(values[i]) is int):
+            elif (type(value) is int):
                 typ = 1
                 size = 8
                 packet_char = 'i'
-            elif (type(values[i]) is float):
+            elif (type(value) is float):
                 typ = 2
                 size = 8
                 packet_char = 'f'
 
             values_list.append(typ)             # type (int)
             values_list.append(size)            # size (int)
+
             if buf is "none":
-                values_list.append(values[i])   # literal value (byte form)
+                values_list.append(value)   # literal value (byte form)
             else:
                 values_list.append(buf)         # literal value 
 
             packet_types += 'ii'+ packet_char   # packet types string 
 
         # Send request
-        req = struct.pack('>iii'+packet_types, 1, table, len(values), *values_list)
+        req = struct.pack('>iii' + packet_types, 1, table, len(values), *values_list)
         self.socket.send(req)
 
-        # Receieve request
+        # Receive request
         response = struct.unpack('>i', self.socket.recv(1024))
                 
     def update(self, table_name, pk, values, version=None):
