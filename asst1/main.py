@@ -57,7 +57,7 @@ def main():
         db.connect(host, port)
         
         # start interactive mode
-        code.interact(local=items)
+        # code.interact(local=items)
         
         # close database connection
         db.close()
