@@ -40,12 +40,19 @@ class Database:
         pass
 
     def connect(self, host, port):
+
+        # Connect to server using socket 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.connect((host, int(port))) 
-               
-        pass
 
+        # Check server connection status 
+        data = self.socket.recv(4096)
+        response = struct.unpack('!i', data)
+        if (response[0] is 10):
+            raise Exception(10)             # SERVER_BUSY
+            self.close() 
+               
     def close(self):
         # create a string of bits everytime i wanna do anythign
         # send a big string
@@ -63,67 +70,56 @@ class Database:
 
         pass
 
+    # Inserts row into given table 
+    # @param self: database object 
+    # @param table_name: name of specified table to be inserted into 
+    # @param values: values: column values to be inserted 
+    # !STATUS: done, error handling done, working condition, not tested for corner cases
     def insert(self, table_name, values):
-        # TODO: implement me
-        table = 0
-        if (table_name == "User"):
-            table = 1
-        else:
-            table = 2
 
         # Table does not exist
-        if table_name not in self.table_names:
+        if not (table_name in self.table_names):
             raise PacketError(3)                # BAD_TABLE
         
-        # Initial variables set
+        # Get table number 
         table = self.get_table_id(table_name)
 
         # Row does not have enough column values
         if (len(self.tables[table][1]) != len(values)):
             raise PacketError(7)                # BAD_ROW
 
-        values_list = []
-        packet_types = ""
-
         # Set packet bytes for values paramater 
+        req = b''
         for i, value in enumerate(values):
-
             # Column value is not of correct type 
             if (type(value) is not self.tables[table][1][i][1]):
                 raise PacketError(6)            # BAD_VALUE
 
-            buf = "none"
-            if (type(values[i]) is str):
-                typ = 3 
+            if (type(value) is str):
+                if (len(value) < 1): 
+                    raise PacketError(6)            # BAD_VALUE 
                 size = 4 * math.ceil(len(value)/4)
-                buf = str.encode(value)
-                packet_char = 'p'
+                buf = value.encode('ASCII') + (b'\x00'*(size - len(value)) if size > len(value) else b'') 
+                req = req + struct.pack('>ii', 3, size)+buf
             elif (type(value) is int):
-                typ = 1
-                size = 8
-                packet_char = 'i'
-            elif (type(values[i]) is float):
-                typ = 2
-                size = 8
-                packet_char = 'f'
-
-            values_list.append(typ)
-            values_list.append(size)
-
-            if buf is "none":
-                values_list.append(value)       # literal value (byte form)
-            else:
-                values_list.append(buf)
-
-            packet_types += 'ii'+ packet_char
+                req = req + struct.pack('>iiq', 1, 8, value)
+            elif (type(value) is float):
+                req = req + struct.pack('>iid', 2, 8, value)
 
         # Send request
-        req = struct.pack('>iii' + packet_types, 1, table, len(values), *values_list)
-        self.socket.send(req)
+        send_req = struct.pack('>iii', 1, table, len(values)) + req
+        self.socket.send(send_req)
 
         # Receieve request
-        response = struct.unpack('>i', self.socket.recv(4096))
-        print((response))
+        data = self.socket.recv(4096)
+        response = struct.unpack('!iqq', data)
+        
+        # Handle request
+        if (response[0] is not 1):
+            raise Exception(10)                 # SERVER_BUSY
+        
+        return response[1],response[2]
+        
                 
     def update(self, table_name, pk, values, version=None):
         # TODO: implement me
