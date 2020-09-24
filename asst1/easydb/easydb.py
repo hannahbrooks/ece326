@@ -14,6 +14,10 @@ import struct
 from .exception import *
 
 class Database:
+
+    def get_table_id(self, table_name):
+        return self.table_names.index(table_name)
+
     def __repr__(self):
         return "<EasyDB Database object>"
 
@@ -62,7 +66,7 @@ class Database:
             raise PacketError(3)                # BAD_TABLE
         
         # Initial variables set
-        table = self.table_names.index(table_name)
+        table = self.get_table_id(table_name)
 
         # Row does not have enough column values
         if (len(self.tables[table][1]) != len(values)):
@@ -70,39 +74,41 @@ class Database:
 
         values_list = []
         packet_types = ""
+
         # Set packet bytes for values paramater 
-        for i in range(0,len(values)):
+        for i, value in enumerate(values):
 
             # Column value is not of correct type 
-            if (type(values[i]) is not self.tables[table][1][i][1]):
+            if (type(value) is not self.tables[table][1][i][1]):
                 raise PacketError(6)            # BAD_VALUE
 
             buf = "none"
-            if (type(values[i]) is str):
+            if (type(value) is str):
                 typ = 3 
-                size = 4 * math.ceil(len(values[i])/4)
-                buf = str.encode(values[i])
+                size = 4 * math.ceil(len(value)/4)
+                buf = str.encode(value)
                 packet_char = 'p'
-            elif (type(values[i]) is int):
+            elif (type(value) is int):
                 typ = 1
                 size = 8
                 packet_char = 'i'
-            elif (type(values[i]) is float):
+            elif (type(value) is float):
                 typ = 2
                 size = 8
                 packet_char = 'f'
 
             values_list.append(typ)             # type (int)
             values_list.append(size)            # size (int)
+
             if buf is "none":
-                values_list.append(values[i])   # literal value (byte form)
+                values_list.append(value)       # literal value (byte form)
             else:
                 values_list.append(buf)         # literal value 
 
             packet_types += 'ii'+ packet_char   # packet types string 
 
         # Send request
-        req = struct.pack('>iii'+packet_types, 1, table, len(values), *values_list)
+        req = struct.pack('>iii' + packet_types, 1, table, len(values), *values_list)
         self.socket.send(req)
 
         # Receieve request
