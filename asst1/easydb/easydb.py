@@ -24,13 +24,8 @@ class Database:
         table_names = []
 
         for table_name, cols in tables:
-            print(table_name)
-            print(cols)
             column_names = []
             for col_name, col_type in cols:
-                print('\n')
-                print(col_name)
-                print(col_type)
                 column_names.append(col_name)
             table_names.append(table_name) # prevent cyclical references
 
@@ -140,14 +135,14 @@ class Database:
 
         # Receieve request
         data = self.socket.recv(4096)
-        print(data)
-        response = struct.unpack('!iqq', data)
-        
+        response = struct.unpack('!i', data)
+
         # Handle request
         if (response[0] is not 1):
             raise Exception(10)                 # SERVER_BUSY
-        
+
         return
+        
         
     def get(self, table_name, pk):
         pass
