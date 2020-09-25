@@ -49,13 +49,6 @@ class Database:
             self.close() 
                
     def close(self):
-        # create a string of bits everytime i wanna do anythign
-        # send a big string
-        # send what u wanna do (the instruction)
-        # send a 6 and a 1
-        # struct pack
-        # we usually send ints, floats, longs
-        # struct pack format "iii, 2, 3, 4"
 
         req = struct.pack('>iii', 6, 1, 0)
         self.socket.send(req)
@@ -63,7 +56,7 @@ class Database:
         self.socket.close()
         sys.exit()
 
-        pass
+        return
 
     # Inserts row into given table 
     # @param self: database object 
@@ -145,7 +138,22 @@ class Database:
         
         
     def get(self, table_name, pk):
-        pass
+        # Table does not exist
+        if not (table_name in self.table_names):
+            raise PacketError(3)                # BAD_TABLE
+        
+        # Get table number 
+        table = self.get_table_id(table_name)
+
+        # Send request
+        send_req = struct.pack('>iiq', 4, table, pk)
+        self.socket.send(send_req)
+
+        # Receieve request
+        data = self.socket.recv(4096)
+        print(data)
+        
+        return
 
     def scan(self, table_name, op, column_name=None, value=None):
         # TODO: implement me
