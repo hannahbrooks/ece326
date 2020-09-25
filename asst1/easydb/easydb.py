@@ -98,9 +98,10 @@ class Database:
             if (type(value) is str):
                 if (len(value) < 1): 
                     raise PacketError(6)            # BAD_VALUE 
+
                 size = 4 * math.ceil(len(value)/4)
                 buf = value.encode('ASCII') + (b'\x00'*(size - len(value)) if size > len(value) else b'') 
-                req = req + struct.pack('>ii', 3, size)+buf
+                req = req + struct.pack('>ii', 3, size) + buf
             elif (type(value) is int):
                 req = req + struct.pack('>iiq', 1, 8, value)
             elif (type(value) is float):
@@ -118,7 +119,7 @@ class Database:
         if (response[0] is not 1):
             raise Exception(10)                 # SERVER_BUSY
         
-        return response[1],response[2]
+        return response[1], response[2]
         
                 
     def update(self, table_name, pk, values, version=None):
@@ -126,11 +127,29 @@ class Database:
         pass
 
     def drop(self, table_name, pk):
-        # TODO: implement me
-        pass
+        # Table does not exist
+        if not (table_name in self.table_names):
+            raise PacketError(3)                # BAD_TABLE
+        
+        # Get table number 
+        table = self.get_table_id(table_name)
+
+        # Send request
+        send_req = struct.pack('>iiq', 3, table, pk)
+        self.socket.send(send_req)
+
+        # Receieve request
+        data = self.socket.recv(4096)
+        print(data)
+        response = struct.unpack('!iqq', data)
+        
+        # Handle request
+        if (response[0] is not 1):
+            raise Exception(10)                 # SERVER_BUSY
+        
+        return
         
     def get(self, table_name, pk):
-        # TODO: implement me
         pass
 
     def scan(self, table_name, op, column_name=None, value=None):
