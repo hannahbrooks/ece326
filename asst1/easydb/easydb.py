@@ -46,7 +46,6 @@ class Database:
         response = struct.unpack('!i', data)
         if (response[0] is 10):
             raise Exception(10)             # SERVER_BUSY
-            self.close() 
                
     def close(self):
 
@@ -58,12 +57,11 @@ class Database:
 
         return
 
-    # Inserts row into given table 
-    # @param self: database object 
-    # @param table_name: name of specified table to be inserted into 
-    # @param values: values: column values to be inserted 
-    # !STATUS: done, error handling done, working condition, not tested for corner cases
     def insert(self, table_name, values):
+
+        # Incorrect argument 
+        if (values is not list):
+            raise PacketError(4)                # BAD_QUERY
 
         # Table does not exist
         if not (table_name in self.table_names):
@@ -100,21 +98,72 @@ class Database:
         self.socket.send(send_req)
 
         # Receieve request
-        data = self.socket.recv(4096)
-        response = struct.unpack('!iqq', data)
+        data = self.socket.recv(4)
+        response = struct.unpack('!i', data)
         
         # Handle request
         if (response[0] is not 1):
-            raise Exception(10)                 # SERVER_BUSY
+            raise Exception(response[0])                 # SERVER_BUSY
+        data = self.socket.recv(16)
+        response = struct.unpack('!qq', data)
         
-        return response[1], response[2]
+        return response[0], response[1]
         
                 
     def update(self, table_name, pk, values, version=None):
-        # TODO: implement me
-        pass
+
+        # Error handling 
+        if not (table_name in self.table_names):
+            raise PacketError(3)                # BAD_TABLE
+        elif (type(pk) != int or type(values) != list):
+            raise PacketError(4)                # BAD_QUERY
+        
+        # Get table number 
+        table = self.get_table_id(table_name)
+        
+        # Check values are valid 
+        if len(values) is not len(self.tables[table][1]): 
+            raise PacketError(7)                # BAD_ROW
+
+        # Prepare bytes to be sent 
+        req = b''
+        for i, value in enumerate(values):
+            # Column value is not of correct type 
+            if (type(value) is not self.tables[table][1][i][1]):
+                raise PacketError(6)            # BAD_VALUE
+
+            if (type(value) is str):
+                if (len(value) < 1): 
+                    raise PacketError(6)        # BAD_VALUE 
+
+                size = 4 * math.ceil(len(value)/4)
+                buf = value.encode('ASCII') + (b'\x00'*(size - len(value)) if size > len(value) else b'') 
+                req = req + struct.pack('>ii', 3, size) + buf
+            elif (type(value) is int):
+                req = req + struct.pack('>iiq', 1, 8, value)
+            elif (type(value) is float):
+                req = req + struct.pack('>iid', 2, 8, value)
+
+        # Send request
+        if (version == None):
+            version = 0 
+        send_req = struct.pack('>iiqqi', 2, table, pk, version, len(values)) + req
+        self.socket.send(send_req)
+
+        # Receieve request
+        data = self.socket.recv(4)
+        response = struct.unpack('!i', data)
+
+        # Handle request
+        if (response[0] is not 1):
+            raise Exception(response[0])          # SERVER_BUSY
+        data = self.socket.recv(1024)
+        response = struct.unpack('!q', data)
+
+        return response[0]
 
     def drop(self, table_name, pk):
+
         # Table does not exist
         if not (table_name in self.table_names):
             raise PacketError(3)                # BAD_TABLE
@@ -138,9 +187,12 @@ class Database:
         
         
     def get(self, table_name, pk):
+        
         # Table does not exist
         if not (table_name in self.table_names):
             raise PacketError(3)                # BAD_TABLE
+        if (pk is not int):
+            raise PacketError(4)                # BAD_QUERY
         
         # Get table number 
         table = self.get_table_id(table_name)
@@ -150,15 +202,36 @@ class Database:
         self.socket.send(send_req)
 
         # Receieve request
-        data = self.socket.recv(4096)
-        print(data)
-        
-        return
+        data = self.socket.recv(4)
+        response = struct.unpack('>i', data)
+        print(response[0])
+        if (response[0] is not 1):
+            raise Exception(response[0])                 # SERVER ERROR
+
+        data = self.socket.recv(12)
+        response = struct.unpack('>qi', data)
+        version = response[0]
+        values = []
+        for i in range(0, response[1]):
+            data = self.socket.recv(8)
+            response = struct.unpack('>ii', data)
+            if (response[0] is 1): # int
+                data = self.socket.recv(8)
+                value = struct.unpack('>q', data)
+                values.append(value[0])
+            elif (response[0] is 2): # float 
+                data = self.socket.recv(8)
+                value = struct.unpack('>d', data)
+                values.append(value[0])
+            elif (response[0] is 3): 
+                data = self.socket.recv(response[1])
+                data = data.decode()
+                data = data.strip("\x00")
+                values.append(data)
+
+        return values, version
 
     def scan(self, table_name, op, column_name=None, value=None):
         # TODO: implement me
         pass
-
-    def get_table_id(self, table_name):
-        return self.table_names.index(table_name)
                         
