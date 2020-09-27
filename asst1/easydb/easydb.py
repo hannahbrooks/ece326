@@ -197,10 +197,14 @@ class Database:
 
         if (type(pk) != int or type(table_name) != str):
             raise PacketError(4)                # BAD_QUERY
+
         # Table does not exist
-        if not (table_name in self.table_names):
-            raise PacketError(3)                # BAD_TABLE
-        
+        if table_name not in self.table_names:
+            raise PacketError(3)              # BAD_TABLE
+
+        if pk > len(self.tables):
+            raise ObjectDoesNotExist
+
         
         # Get table number 
         table = self.get_table_id(table_name)
