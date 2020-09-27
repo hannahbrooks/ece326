@@ -45,7 +45,10 @@ class Database:
         data = self.socket.recv(4096)
         response = struct.unpack('!i', data)
         if (response[0] is 10):
-            raise Exception(10)             # SERVER_BUSY
+            self.close()
+            return False
+        
+        return True
                
     def close(self):
 
@@ -60,7 +63,7 @@ class Database:
     def insert(self, table_name, values):
 
         # Incorrect argument 
-        if (values is not list):
+        if (type(values) is not list):
             raise PacketError(4)                # BAD_QUERY
 
         # Table does not exist
@@ -164,9 +167,12 @@ class Database:
 
     def drop(self, table_name, pk):
 
+        if (type(pk) != int or type(table_name) != str):
+            raise PacketError(4)                # BAD_QUERY
         # Table does not exist
         if not (table_name in self.table_names):
             raise PacketError(3)                # BAD_TABLE
+        
         
         # Get table number 
         table = self.get_table_id(table_name)
@@ -188,11 +194,11 @@ class Database:
         
     def get(self, table_name, pk):
         
+        if (type(pk) != int or type(table_name) != str):
+            raise PacketError(4)                # BAD_QUERY
         # Table does not exist
         if not (table_name in self.table_names):
             raise PacketError(3)                # BAD_TABLE
-        if (pk is not int):
-            raise PacketError(4)                # BAD_QUERY
         
         # Get table number 
         table = self.get_table_id(table_name)
@@ -231,7 +237,63 @@ class Database:
 
         return values, version
 
+    class operator:
+        AL = 1  # everything
+        EQ = 2  # equal 
+        NE = 3  # not equal
+        LT = 4  # less than
+        GT = 5  # greater than 
+        LE = 6  # you do not have to implement the following two
+        GE = 7
+
     def scan(self, table_name, op, column_name=None, value=None):
-        # TODO: implement me
-        pass
+        
+        if (type(op) is not int or type(table_name) is not str):
+            raise PacketError(4)                # BAD_QUERY
+        if (column_name != None and value == None):
+            raise PacketError(4)                # BAD_QUERY
+        # Table does not exist
+        if not (table_name in self.table_names):
+            raise PacketError(3)                # BAD_TABLE
+        # Get table number 
+        table = self.get_table_id(table_name)
+
+        if (op == 1 or column_name == None):
+            col = 0 
+        else:
+            if (column_name, type(value)) in self.tables[table][1]:
+                col = self.tables[table][1].index((column_name, type(value)))
+            else:
+                raise PacketError(4)                # BAD_QUERY
+        
+        # prepare struct value 
+        if (col == 0):
+            req = struct.pack('>ii', 0, 0)
+        elif (type(value) is int):
+            req = struct.pack('>iiq', 1, 8, value)
+        elif (type(value) is float):
+            req = struct.pack('>iid', 2, 8, value)
+        elif type(value) is str:
+            size = 4 * math.ceil(len(value)/4)
+            buf = value.encode('ASCII') + (b'\x00'*(size - len(value)) if size > len(value) else b'') 
+            req = struct.pack('>ii', 3, size) + buf
+
+        send_req = struct.pack('>iiii', 5, table, col, op) + req
+        self.socket.send(send_req)
+
+        # Receieve request
+        data = self.socket.recv(4)
+        response = struct.unpack('!i', data)
+
+        # Handle request
+        if (response[0] is not 1):
+            raise Exception(response[0])                 # SERVER ERROR
+
+        data = self.socket.recv(4)
+        response = struct.unpack('!i', data)
+        data = self.socket.recv(4096)
+        response = struct.unpack('!'+('q'*response[0]), data)
+
+        return list(response)
+        
                         

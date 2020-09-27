@@ -1,0 +1,7 @@
+format test, 7, 20
+connect test, 0, 5
+insert test, 10, 15
+update test, 7, 15
+drop test, 9, 10
+get test, 8, 15
+scan test, 9, 20
