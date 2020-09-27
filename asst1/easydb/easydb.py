@@ -262,7 +262,7 @@ class Database:
             col = 0 
         else:
             if (column_name, type(value)) in self.tables[table][1]:
-                col = self.tables[table][1].index((column_name, type(value)))
+                col = self.tables[table][1].index((column_name, type(value))) + 1
             else:
                 raise PacketError(4)                # BAD_QUERY
         
@@ -280,7 +280,7 @@ class Database:
 
         send_req = struct.pack('>iiii', 5, table, col, op) + req
         self.socket.send(send_req)
-
+        
         # Receieve request
         data = self.socket.recv(4)
         response = struct.unpack('!i', data)
@@ -291,6 +291,9 @@ class Database:
 
         data = self.socket.recv(4)
         response = struct.unpack('!i', data)
+        if (response[0] == 0):
+            return list([])
+
         data = self.socket.recv(4096)
         response = struct.unpack('!'+('q'*response[0]), data)
 
