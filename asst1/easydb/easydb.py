@@ -23,9 +23,39 @@ class Database:
     def __init__(self, tables):
         table_names = []
 
+        if len(tables) < 2 and len(tables) != 0 :
+            raise IndexError
+
         for table_name, cols in tables:
+            if table_name[0] == "_":
+                raise ValueError
+            if type(table_name) is not str:
+                raise TypeError
+            if table_name in table_names:
+                raise ValueError
+
+
             column_names = []
+            for item in cols:
+                if len(item) != 2:
+                    raise IndexError
             for col_name, col_type in cols:
+                if type(col_name) is not str:
+                    raise TypeError
+                if col_name[0].isdigit():
+                    raise ValueError
+                if col_name in column_names:
+                    raise ValueError
+                if col_name in ("id", "pk", "save", "delete", "get", "filter", "count"):
+                    raise ValueError
+
+                if col_type not in (str, float, int):
+                    if col_type in (tuple, list):
+                        raise ValueError
+                    if col_type not in table_names:
+                        raise IntegrityError
+
+
                 column_names.append(col_name)
             table_names.append(table_name) # prevent cyclical references
 
@@ -56,8 +86,6 @@ class Database:
         self.socket.send(req)
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
-        sys.exit()
-
         return
 
     def insert(self, table_name, values):
