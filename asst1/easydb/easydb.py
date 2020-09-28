@@ -108,8 +108,19 @@ class Database:
         # Set packet bytes for values paramater 
         req = b''
         for i, value in enumerate(values):
+            # check foreign
+            if self.tables[table][1][i][1] in self.table_names:
+                try:
+                    check_row, version = self.get(self.tables[table][1][i][1], value)
+                except:
+                    raise InvalidReference(2)
+                if len(check_row) == 0:
+                    raise InvalidReference(9)   #BAD_FOREIGN
+                req = req + struct.pack('>iiq', 4, 8, value)
+                continue 
+
             # Column value is not of correct type 
-            if (type(value) is not self.tables[table][1][i][1]):
+            if (type(value) != self.tables[table][1][i][1]):
                 raise PacketError(6)            # BAD_VALUE
 
             if (type(value) is str):
@@ -166,6 +177,16 @@ class Database:
         # Prepare bytes to be sent 
         req = b''
         for i, value in enumerate(values):
+            if self.tables[table][1][i][1] in self.table_names:
+                try:
+                    check_row, v = self.get(self.tables[table][1][i][1], value)
+                except:
+                    raise InvalidReference(2)
+                if len(check_row) == 0:
+                    raise InvalidReference(9)   #BAD_FOREIGN
+                req = req + struct.pack('>iiq', 4, 8, value)
+                continue
+
             # Column value is not of correct type 
             if (type(value) is not self.tables[table][1][i][1]):
                 raise PacketError(6)            # BAD_VALUE
@@ -183,6 +204,8 @@ class Database:
                 req = req + struct.pack('>iid', 2, 8, value)
 
         # Send request
+        if (version is None):
+            version = 0
         send_req = struct.pack('>iiqqi', 2, table, pk, version, len(values)) + req
         self.socket.send(send_req)
 
@@ -237,8 +260,8 @@ class Database:
         if not (table_name in self.table_names):
             raise PacketError(3)                # BAD_TABLE
 
-        if pk > len(self.tables):
-            raise ObjectDoesNotExist
+        #if pk > len(self.tables):
+         #   raise ObjectDoesNotExist
         
         # Get table number 
         table = self.get_table_id(table_name)
@@ -250,9 +273,9 @@ class Database:
         # Receieve request
         data = self.socket.recv(4)
         response = struct.unpack('>i', data)
-        print(response[0])
+
         if (response[0] is not 1):
-            raise Exception(response[0])                 # SERVER ERROR
+            raise ObjectDoesNotExist(response[0])                 # SERVER ERROR
 
         data = self.socket.recv(12)
         response = struct.unpack('>qi', data)
@@ -274,6 +297,10 @@ class Database:
                 data = data.decode()
                 data = data.strip("\x00")
                 values.append(data)
+            elif (response[0] is 4):
+                data = self.socket.recv(8)
+                value = struct.unpack('>q', data)
+                values.append(value[0])
 
         return values, version
 
@@ -303,7 +330,7 @@ class Database:
         # Get table number 
         table = self.get_table_id(table_name)
 
-        if (op == 1 or column_name == None):
+        if (op == 1 or column_name == None or column_name == "id"):
             col = 0 
         else:
             if (column_name, type(value)) in self.tables[table][1]:
@@ -313,7 +340,10 @@ class Database:
         
         # prepare struct value 
         if (col == 0):
-            req = struct.pack('>ii', 0, 0)
+            if (column_name == "id"):
+                req = struct.pack('>iiq', 4, 8, value)
+            else:
+                req = struct.pack('>ii', 0, 0)
         elif (type(value) is int):
             req = struct.pack('>iiq', 1, 8, value)
         elif (type(value) is float):
