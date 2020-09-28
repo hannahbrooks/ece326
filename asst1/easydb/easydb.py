@@ -25,7 +25,6 @@ class Database:
 
         if len(tables) < 2 and len(tables) != 0 :
             raise IndexError
-
         for table_name, cols in tables:
             if table_name[0] == "_":
                 raise ValueError
@@ -57,15 +56,14 @@ class Database:
 
 
                 column_names.append(col_name)
-            table_names.append(table_name) # prevent cyclical references
+            table_names.append(table_name)
 
-        self.tables = [None] + list(tables) # considered dict, but need preserve order
+        self.tables = [None] + list(tables)
         self.table_names = [None] + table_names
 
         pass
 
     def connect(self, host, port):
-
         # Connect to server using socket 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -81,7 +79,6 @@ class Database:
         return True
                
     def close(self):
-
         req = struct.pack('>iii', 6, 1, 0)
         self.socket.send(req)
         self.socket.shutdown(socket.SHUT_RDWR)
@@ -89,12 +86,8 @@ class Database:
         return
 
     def insert(self, table_name, values):
-
-        # Incorrect argument 
         if (type(values) is not list):
             raise PacketError(4)                # BAD_QUERY
-
-        # Table does not exist
         if not (table_name in self.table_names):
             raise PacketError(3)                # BAD_TABLE
         
@@ -153,16 +146,12 @@ class Database:
         
                 
     def update(self, table_name, pk, values, version=None):
-
-        # Error handling 
         if not (table_name in self.table_names):
-            raise PacketError(3)                # BAD_TABLE
+            raise PacketError(3)                    # BAD_TABLE
         elif (type(pk) != int or type(values) != list):
-            raise PacketError(4)                # BAD_QUERY
-
+            raise PacketError(4)                    # BAD_QUERY
         if pk > len(self.tables):
             raise ObjectDoesNotExist
-
         if type(version) is not int:
             if version is not None:
                 raise PacketError(4)
@@ -172,7 +161,7 @@ class Database:
         
         # Check values are valid 
         if len(values) is not len(self.tables[table][1]): 
-            raise PacketError(7)                # BAD_ROW
+            raise PacketError(7)                    # BAD_ROW
 
         # Prepare bytes to be sent 
         req = b''
@@ -183,17 +172,17 @@ class Database:
                 except:
                     raise InvalidReference(2)
                 if len(check_row) == 0:
-                    raise InvalidReference(9)   #BAD_FOREIGN
+                    raise InvalidReference(9)       #BAD_FOREIGN
                 req = req + struct.pack('>iiq', 4, 8, value)
                 continue
 
             # Column value is not of correct type 
             if (type(value) is not self.tables[table][1][i][1]):
-                raise PacketError(6)            # BAD_VALUE
+                raise PacketError(6)                # BAD_VALUE
 
             if (type(value) is str):
                 if (len(value) < 1): 
-                    raise PacketError(6)        # BAD_VALUE 
+                    raise PacketError(6)            # BAD_VALUE 
 
                 size = 4 * math.ceil(len(value)/4)
                 buf = value.encode('ASCII') + (b'\x00'*(size - len(value)) if size > len(value) else b'') 
@@ -215,25 +204,20 @@ class Database:
 
         # Handle request
         if (response[0] is not 1):
-            raise TransactionAbort          # SERVER_BUSY
+            raise TransactionAbort                     # SERVER_BUSY
         data = self.socket.recv(1024)
         response = struct.unpack('!q', data)
 
         return response[0]
 
     def drop(self, table_name, pk):
-
         if (type(pk) != int or type(table_name) != str):
-            raise PacketError(4)                # BAD_QUERY
-
-        # Table does not exist
+            raise PacketError(4)                         # BAD_QUERY
         if table_name not in self.table_names:
-            raise PacketError(3)              # BAD_TABLE
-
+            raise PacketError(3)                         # BAD_TABLE
         if pk > len(self.tables):
             raise ObjectDoesNotExist
 
-        
         # Get table number 
         table = self.get_table_id(table_name)
 
@@ -253,15 +237,11 @@ class Database:
         
         
     def get(self, table_name, pk):
-        
         if (type(pk) != int or type(table_name) != str):
             raise PacketError(4)                # BAD_QUERY
-        # Table does not exist
         if not (table_name in self.table_names):
             raise PacketError(3)                # BAD_TABLE
 
-        #if pk > len(self.tables):
-         #   raise ObjectDoesNotExist
         
         # Get table number 
         table = self.get_table_id(table_name)
@@ -275,7 +255,7 @@ class Database:
         response = struct.unpack('>i', data)
 
         if (response[0] is not 1):
-            raise ObjectDoesNotExist(response[0])                 # SERVER ERROR
+            raise ObjectDoesNotExist(response[0])       # SERVER ERROR
 
         data = self.socket.recv(12)
         response = struct.unpack('>qi', data)
@@ -304,17 +284,7 @@ class Database:
 
         return values, version
 
-    class operator:
-        AL = 1  # everything
-        EQ = 2  # equal 
-        NE = 3  # not equal
-        LT = 4  # less than
-        GT = 5  # greater than 
-        LE = 6  # you do not have to implement the following two
-        GE = 7
-
     def scan(self, table_name, op, column_name=None, value=None):
-
         if op not in range(1, 8):
             raise PacketError(4)
         if (type(op) is not int or type(table_name) is not str):
@@ -323,11 +293,9 @@ class Database:
             raise PacketError(4)                # BAD_QUERY
         if column_name is None and op != 1:
                 raise PacketError(4)
-
-        # Table does not exist
         if not (table_name in self.table_names):
             raise PacketError(3)                # BAD_TABLE
-        # Get table number 
+
         table = self.get_table_id(table_name)
 
         if (op == 1 or column_name == None or column_name == "id"):
