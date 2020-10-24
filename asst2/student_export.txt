@@ -1,0 +1,26 @@
+User {
+	firstName: string;
+	lastName: string;
+	height: float;
+	age: integer;
+}
+
+Account {
+	user: User;
+	type: string;
+	balance: float;
+}
+
+City {
+	Latitude: float;
+	Longitude: float;
+	name: string;
+}
+
+Event {
+	location: City;
+	start: float;
+	end: float;
+}
+
+

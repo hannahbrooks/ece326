@@ -6,7 +6,9 @@
 #
 
 from .easydb import Database
+from .table import MetaTable
 import inspect
+import orm
 
 # Return a database object that is initialized, but not yet connected.
 #   database_name: str, database name
@@ -17,7 +19,7 @@ def setup(database_name, module):
         raise NotImplementedError("Support for %s has not implemented"%(
             str(database_name)))         
 
-    return Database(make_schema(module))
+    return Database(setup_schema(module))
 
 # Return a string which can be read by the underlying database to create the 
 # corresponding database tables.
@@ -30,7 +32,7 @@ def export(database_name, module):
         raise NotImplementedError("Support for %s has not implemented"%(
             str(database_name)))
 
-    schema = make_schema(module)
+    schema = setup_schema(module)
 
     text = ""
     for table_name, types in schema:
@@ -44,42 +46,35 @@ def export(database_name, module):
                 text += "integer;\n"
             elif t == str:
                 text += "string;\n"
-            # elif t == Foreign:
-                # not sure what to do
-
+            elif type(t) == str:
+                text += t+";\n"
+                
         text += "}\n\n"
 
     return text
 
-def make_schema(module):
+def setup_schema(module):
     schema = []
-    
-    for name, obj in inspect.getmembers(module):
-        if '__' == name[:2] or name == 'datetime' or name == 'orm':
-            continue
-
-        if inspect.isclass(obj) and name != 'datetime':
-            types = []
-            for member, t in obj.__dict__.items():
-                if '__' == member[:2]:
+    for clsname in MetaTable.table_names:
+        types = []
+        for member, t in MetaTable.table_names[clsname].__dict__.items():
+            if '__' == member[:2] or member == "col" or member == "field":
                     continue
 
-                if 'String' in str(t):
-                    types.append((member, str))
-                elif 'Integer' in str(t):
-                    types.append((member, int))
-                elif 'Float' in str(t):
-                    types.append((member, float))
-                elif 'Coordinate' in str(t):
-                    types.append(('Latitude', float))
-                    types.append(('Longitude', float))
-                elif 'Datetime' in str(t):
-                    types.append((member, float))
-                elif 'Foreign' in str(t):
-                    # idk what to do
-                    continue
+            if 'String' in str(t):
+                types.append((member, str))
+            elif 'Integer' in str(t):
+                types.append((member, int))
+            elif 'Float' in str(t):
+                types.append((member, float))
+            elif 'Coordinate' in str(t):
+                types.append(('Latitude', float))
+                types.append(('Longitude', float))
+            elif 'DateTime' in str(t):
+                types.append((member, float))
+            elif 'Foreign' in str(t):
+                types.append((member, t.table.__name__))
 
-        schema.append((name, tuple(types)))
+        schema.append((clsname, tuple(types)))
 
     return schema
-

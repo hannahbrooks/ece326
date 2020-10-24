@@ -6,16 +6,18 @@
 #
 
 from datetime import datetime
-
+import orm
 
 class Integer:   
-    def __init__(self, blank=False, default=None, choices=None):
+    def __init__(self, blank=False, default=0, choices=None):
         if default is not None:
             if type(default) is not int:
                 raise TypeError("'{}' is not an integer.".format(default))
         if choices is not None:
+            if default not in choices and blank==True:
+                raise TypeError
             for choice in choices:
-                if type(default) is not int:
+                if type(choice) is not int:
                     raise TypeError("'{}' is not an integer.".format(default))
 
         self.blank = blank
@@ -23,13 +25,15 @@ class Integer:
         self.default = default
 
 class Float: 
-    def __init__(self, blank=False, default=None, choices=None):
-        if default is not None:
+    def __init__(self, blank=False, default=0.0, choices=None):
+        if default is not 0.0:
             if not type(default) in [int, float]:
                 raise TypeError("'{}' is not an integer or float.".format(default))
         if choices is not None:
+            if default not in choices and blank==True:
+                raise TypeError
             for choice in choices:
-                if not type(default) in [int, float]:
+                if not type(choice) in [int, float]:
                     raise TypeError("'{}' is not an integer or float.".format(default))
 
         self.blank = blank
@@ -37,14 +41,16 @@ class Float:
         self.default = default
 
 class String:
-    def __init__(self, blank=False, default=None, choices=None):
+    def __init__(self, blank=False, default="", choices=None):
         if default is not None:
             if type(default) is not str:
                 raise TypeError("'{}' is not a string.".format(default))
         
         if choices is not None:
+            if default not in choices and blank==True:
+                raise TypeError
             for choice in choices:
-                if type(default) is not str:
+                if type(choice) is not str:
                     raise TypeError("'{}' is not a string.".format(default))
 
         self.blank = blank
@@ -52,27 +58,35 @@ class String:
         self.default = default
 
 class Foreign:
-    def __init__(self, table, blank=False):
-        self.table = table        
-
-        # if type(table) is not :
-        #     raise TypeError("`{}` is not a valid foreign key reference.".format(table))
-        
+    def __init__(self, table="", blank=False):
+        if blank == True:
+            self.table = None
+        elif blank == False and table=="":
+            raise TypeError
+        elif (type(table) != orm.table.MetaTable):
+            raise TypeError("'{}' is not a table.".format(table))
+        elif (table.__name__ in orm.table.MetaTable.table_names):
+            self.table = table
+        else:
+            raise TypeError("'{}' is not a table.".format(table))
+                  
 
 
 class DateTime:
     implemented = True
 
-    def __init__(self, blank=False, default=None, choices=None):
-        if default is not None: default = default()
+    def __init__(self, blank=False, default=0, choices=None):
+        if default is not 0: default = default()
         
-        if default is not None:
+        if default is not 0:
             if type(default) is not datetime:
                 raise TypeError("`{}` is not a datetime.".format(default))
 
         if choices is not None:
+            if default not in choices and blank==True:
+                raise TypeError
             for choice in choices:
-                if type(default) is not datetime:
+                if type(choice) is not datetime:
                     raise TypeError("'{}' is not a datetime.".format(default))
 
         self.blank = blank
@@ -93,8 +107,10 @@ class Coordinate:
                 raise TypeError("`{}` does not contain valid coordinate values.".format(default))
 
         if choices is not None:
+            if default not in choices and blank==True:
+                raise TypeError
             for choice in choices:
-                if type(default) is not datetime:
+                if type(choice) is not datetime:
                     raise TypeError("`{}` is not a valid coordinate.".format(default))
 
         self.blank = blank

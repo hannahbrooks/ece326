@@ -237,7 +237,7 @@ class Database:
         
         
     def get(self, table_name, pk):
-        if (type(pk) != int or type(table_name) != str):
+        if (type(pk) != int):
             raise PacketError(4)                # BAD_QUERY
         if not (table_name in self.table_names):
             raise PacketError(3)                # BAD_TABLE

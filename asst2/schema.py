@@ -27,7 +27,7 @@ if orm.Coordinate.implemented:
         
         def __repr__(self):
             return "<Capital: %s>"%(self.name)
-            
+
 if orm.DateTime.implemented:
     class Parade(orm.Table):
         location = orm.Foreign(Capital)
@@ -37,3 +37,4 @@ if orm.DateTime.implemented:
         def __repr__(self):
             return "<Parade: %d/%d/%d - %s>"%(self.start.year, 
                 self.start.month, self.start.day, self.location.name)
+
