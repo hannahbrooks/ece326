@@ -18,7 +18,6 @@ def setup(database_name, module):
     if database_name != "easydb":
         raise NotImplementedError("Support for %s has not implemented"%(
             str(database_name)))         
-
     return Database(setup_schema(module))
 
 # Return a string which can be read by the underlying database to create the 
@@ -55,6 +54,7 @@ def export(database_name, module):
 
 def setup_schema(module):
     schema = []
+    
     for clsname in MetaTable.table_names:
         types = []
         for member, t in MetaTable.table_names[clsname].__dict__.items():
@@ -76,5 +76,5 @@ def setup_schema(module):
                 types.append((member, t.table.__name__))
 
         schema.append((clsname, tuple(types)))
-
+    
     return schema

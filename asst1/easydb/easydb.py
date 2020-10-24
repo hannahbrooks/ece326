@@ -231,7 +231,7 @@ class Database:
 
         # Handle request
         if (response[0] is not 1):
-            raise Exception(10)                 # SERVER_BUSY
+            raise ObjectDoesNotExist(response[0])                 # SERVER_BUSY
 
         return
         
@@ -330,7 +330,7 @@ class Database:
 
         # Handle request
         if (response[0] is not 1):
-            raise Exception(response[0])                 # SERVER ERROR
+            raise PacketError(response[0])                 # SERVER ERROR
 
         data = self.socket.recv(4)
         response = struct.unpack('!i', data)
