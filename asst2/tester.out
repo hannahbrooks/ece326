@@ -5,4 +5,4 @@ delete test, 6, 6
 get test, 8, 8
 filter test, 15, 15
 count test, 8, 8
-custom test, 0, 18
+custom test, 18, 18

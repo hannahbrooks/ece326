@@ -156,13 +156,15 @@ class Foreign:
                   
 class DateTime:
     implemented = True
+    base_default = datetime.fromtimestamp(0)
 
     def __init__(self, blank=None, default=0, choices=None):
-        if default is not 0: default = default()
-        
-        if default is not 0:
-            if type(default) is not datetime:
-                raise TypeError("`{}` is not a datetime.".format(default))
+        self.default = DateTime.base_default 
+
+        if callable(default):
+            self.default = default()
+        else:
+            self.default = default
 
         if choices is not None:
             if default not in choices and blank==True:
@@ -177,6 +179,26 @@ class DateTime:
     
     def _name (self, col):
         self.name = "_"+col
+    
+    def __set__(self, obj, val):
+        if (val is self.default and val != 0):
+            setattr(obj, self.name, val())
+        elif self.choices is not None:
+            if val not in self.choices:
+                raise ValueError
+        elif isinstance(val, type(datetime(2020, 1, 1))):
+            setattr(obj, self.name, val)
+        # hard coded lol
+        elif val == 0 and self.default == 0:
+            setattr(obj, self.name, datetime.fromtimestamp(0))
+        else:
+            raise TypeError
+
+    def __get__ (self, instance, owner):
+        if instance is not None:
+            return getattr(instance, self.name)
+        else:
+            return self
 
 
 class Coordinate:

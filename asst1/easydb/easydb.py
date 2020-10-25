@@ -114,11 +114,11 @@ class Database:
 
             # Column value is not of correct type 
             if (type(value) != self.tables[table][1][i][1]):
-                raise PacketError(6)            # BAD_VALUE
+                raise PacketError("in inset inrocrret type")            # BAD_VALUE
 
             if (type(value) is str):
                 if (len(value) < 1): 
-                    raise PacketError(6)            # BAD_VALUE 
+                    raise PacketError("in inset type")            # BAD_VALUE 
 
                 size = 4 * math.ceil(len(value)/4)
                 buf = value.encode('ASCII') + (b'\x00'*(size - len(value)) if size > len(value) else b'') 
@@ -286,13 +286,13 @@ class Database:
 
     def scan(self, table_name, op, column_name=None, value=None):
         if op not in range(1, 8):
-            raise PacketError(4)
+            raise PacketError("Not in range")
         if (type(op) is not int or type(table_name) is not str):
-            raise PacketError(4)                # BAD_QUERY
+            raise PacketError("Wrong types")                # BAD_QUERY
         if (column_name != None and value == None):
-            raise PacketError(4)                # BAD_QUERY
+            raise PacketError("None as vals")                # BAD_QUERY
         if column_name is None and op != 1:
-                raise PacketError(4)
+                raise PacketError("None for op 1")
         if not (table_name in self.table_names):
             raise PacketError(3)                # BAD_TABLE
 
@@ -304,7 +304,7 @@ class Database:
             if (column_name, type(value)) in self.tables[table][1]:
                 col = self.tables[table][1].index((column_name, type(value))) + 1
             else:
-                raise PacketError(4)                # BAD_QUERY
+                raise PacketError("Other")                # BAD_QUERY
         
         # prepare struct value 
         if (col == 0):

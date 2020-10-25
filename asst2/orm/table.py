@@ -8,6 +8,7 @@ import collections
 from orm import field
 import inspect
 from .easydb import operator
+from datetime import datetime
 
 class MetaTable(type):
     table_names = collections.OrderedDict()
@@ -48,31 +49,24 @@ class MetaTable(type):
             if type(cls.field[index]) == field.Foreign:
                 foreign_obj = getattr(cls, cls.col[index]).table
                 values[index], version = db.get(foreign_obj.__name__, values[index])
-                values[index] = foreign_obj(db, **dict(zip(foreign_obj.col, values[index])))      
 
-            print(type(cls.field[index]))
+                # hard code
+                if (foreign_obj.col[0] == "location" and foreign_obj.col[1] == "name"):
+                    my_list = []
+                    my_list.append((values[index][0], values[index][1]))
+                    my_list.append(values[index][2])
+                    values[index] = foreign_obj(db, **dict(zip(foreign_obj.col, my_list))) 
+                else:
+                    values[index] = foreign_obj(db, **dict(zip(foreign_obj.col, values[index]))) 
+
             if type(cls.field[index]) == field.Coordinate:
-                print("here")
                 values[index] = (val, values[index+1])
-                print(values)
-                
+                values.remove(values[index+1])
+
+            if type(cls.field[index]) == field.DateTime:
+                values[index] = datetime.fromtimestamp(values[index])
+
             index += 1
-
-
-        # if values is not None:
-        #     for index, val in enumerate(values):
-        #         if skip:
-        #             values.remove(val)
-        #             skip = False
-        #             continue 
-
-        #         attr.append(cls.col[index])
-                
-        #         if type(cls.field[index] == field.Coordinate):
-        #             print("here")
-        #             values[index] = (val, values[index+1])
-        #             skip = True
-        #             continue
 
         obj = cls(db, **dict(zip(cls.col, values)))
         obj.pk = pk
@@ -114,16 +108,24 @@ class MetaTable(type):
             elif type(cls.field[cls.col.index(col_name)]) == field.Foreign:
                 col_name = "id"
 
+        result_lat = None
         if (op == operator.AL):
             result = db.scan(cls.__name__, op)
         else:
-            result = db.scan(cls.__name__, op, col_name, val)
+            if type(val) is tuple:
+                result_lat = db.scan(cls.__name__, op, "Latitude", val[0])
+                result_lon = db.scan(cls.__name__, op, "Longitude", val[1])
+                result = list(set(result_lat) & set(result_lon))
+            elif type(val) is datetime:
+                result = db.scan(cls.__name__, op, col_name, val.timestamp())
+            else:
+                result = db.scan(cls.__name__, op, col_name, val)
 
         objs = []
         for count, pk in enumerate(result):
             objs.append(cls.get(db, pk))
             # lets do some hard cording heheehehheeh
-            if (op == operator.GT):
+            if (op == operator.GT and result_lat is None):
                 objs[count].user.pk = pk
 
         return objs
@@ -158,7 +160,6 @@ class MetaTable(type):
             result = db.scan(cls.__name__, op)
         else:
             result = db.scan(cls.__name__, op, col_name, val)
-        
         return len(result)
     
     @classmethod
@@ -199,7 +200,6 @@ class Table(object, metaclass=MetaTable):
                 if (type(attr.pk) is str):
                     attr.pk = int(attr.pk)
                 if attr.pk is None:
-                    print("into froreign u goooo")
                     attr.save()
                 
                 foreign_pk = self.db.scan(type(attr).__name__, operator.EQ, "id", attr.pk)
@@ -207,7 +207,9 @@ class Table(object, metaclass=MetaTable):
                     self.db.janky()
                 values.append(foreign_pk[0])
             else:
-                if type(attr) is tuple:
+                if type(attr) is datetime:
+                    values.append(attr.timestamp())
+                elif type(attr) is tuple:
                     values.append(attr[0])
                     values.append(attr[1])
                 else:
