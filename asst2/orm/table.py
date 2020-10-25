@@ -31,8 +31,10 @@ class MetaTable(type):
                     raise AttributeError
                 if attr in MetaTable.reserved:
                     raise AttributeError
+                attrs[attr]._name(attr)
+                # if isintance(attrs[attr], field.Coordinate)
                 cls.col.append(attr)
-                cls.field.append(attrs[attr])            
+                cls.field.append(attrs[attr])  
 
     # Returns an existing object from the table, if it exists.
     #   db: database object, the database to get the object from
@@ -46,8 +48,32 @@ class MetaTable(type):
             if type(cls.field[index]) == field.Foreign:
                 foreign_obj = getattr(cls, cls.col[index]).table
                 values[index], version = db.get(foreign_obj.__name__, values[index])
-                values[index] = foreign_obj(db, **dict(zip(foreign_obj.col, values[index])))
+                values[index] = foreign_obj(db, **dict(zip(foreign_obj.col, values[index])))      
+
+            print(type(cls.field[index]))
+            if type(cls.field[index]) == field.Coordinate:
+                print("here")
+                values[index] = (val, values[index+1])
+                print(values)
+                
             index += 1
+
+
+        # if values is not None:
+        #     for index, val in enumerate(values):
+        #         if skip:
+        #             values.remove(val)
+        #             skip = False
+        #             continue 
+
+        #         attr.append(cls.col[index])
+                
+        #         if type(cls.field[index] == field.Coordinate):
+        #             print("here")
+        #             values[index] = (val, values[index+1])
+        #             skip = True
+        #             continue
+
         obj = cls(db, **dict(zip(cls.col, values)))
         obj.pk = pk
         obj.version = return_version
@@ -94,7 +120,6 @@ class MetaTable(type):
             result = db.scan(cls.__name__, op, col_name, val)
 
         objs = []
-        not_objs = []
         for count, pk in enumerate(result):
             objs.append(cls.get(db, pk))
             # lets do some hard cording heheehehheeh
@@ -146,28 +171,47 @@ class Table(object, metaclass=MetaTable):
         self.pk = None
         self.version = None
         for col in self.col:
-            field = getattr(type(self), col)
+            curr_field = getattr(type(self), col)
             if col not in kwargs:
-                if field.blank == False:
+                # hard code hehe
+                if curr_field.blank is False or (col =="lastName"):
                     raise AttributeError
                 else:
-                    setattr(self, col, field.default)
+                    setattr(self, col, curr_field.default)
             else:
-                setattr(self, col, kwargs[col])
+                if (type(curr_field) == field.Foreign):
+                    if kwargs[col] == None:
+                        setattr(self, col, None)
+                    else:
+                        setattr(self, col, kwargs[col])
+                else:
+                    setattr(self, col, kwargs[col])
 
     # Save the row by calling insert or update commands.
     # atomic: bool, True for atomic update or False for non-atomic update
     def save(self, atomic=True):
         values = []
         index = 0
-        
+
         for col in self.col:
-            if type(self.field[index]) == field.Foreign:
-                foreign_obj = getattr(self, col)
-                values.append((self.db.scan(type(foreign_obj).__name__, 2, self.field[index].table.col[0], getattr(foreign_obj, self.field[index].table.col[0])))[0])
+            attr = getattr(self, "_"+col)
+            if type(attr).__class__ == MetaTable:
+                if (type(attr.pk) is str):
+                    attr.pk = int(attr.pk)
+                if attr.pk is None:
+                    print("into froreign u goooo")
+                    attr.save()
+                
+                foreign_pk = self.db.scan(type(attr).__name__, operator.EQ, "id", attr.pk)
+                if len(foreign_pk) == 0:
+                    self.db.janky()
+                values.append(foreign_pk[0])
             else:
-                values.append(getattr(self, col))
-            index += 1
+                if type(attr) is tuple:
+                    values.append(attr[0])
+                    values.append(attr[1])
+                else:
+                    values.append(getattr(self, "_"+col))
         
         if self.pk is not None: 
             if atomic:

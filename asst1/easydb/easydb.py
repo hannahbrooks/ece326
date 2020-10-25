@@ -342,4 +342,5 @@ class Database:
 
         return list(response)
         
-                        
+    def janky(self):
+        raise InvalidReference

@@ -52,6 +52,18 @@ def export(database_name, module):
 
     return text
 
+def tryagain(module):
+    schema = []
+    for clsname in MetaTable.table_names:
+        if clsname not in module.__dict__:
+            continue 
+        cols = []
+        table = [clsname, cols]
+        cls = MetaTable.table_names[clsname]
+        for col, field in zip(cls.col, cls.field):
+            cols.append((col, field.type))
+    return schema
+
 def setup_schema(module):
     schema = []
     
@@ -73,7 +85,8 @@ def setup_schema(module):
             elif 'DateTime' in str(t):
                 types.append((member, float))
             elif 'Foreign' in str(t):
-                types.append((member, t.table.__name__))
+                if t.table is not None:
+                    types.append((member, t.table.__name__))
 
         schema.append((clsname, tuple(types)))
     
