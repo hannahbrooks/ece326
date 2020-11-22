@@ -256,7 +256,12 @@ fn handle_update(db: & mut Database, table_id: i32, object_id: i64,
     }
     return Err(Response::NOT_FOUND); 
 }
-
+fn handle_drop(db: & mut Database, table_id: i32, object_id: i64) 
+    -> Result<Response, i32>
+{
+    return Err(Response::NOT_FOUND); 
+}
+/*
 fn drop_helper (db: & mut Database, table_id: i32, object_id: i64) -> HashMap<i32, Vec<i64>> {
     let mut hash = HashMap::new(); 
     println!("Referencing from: table {} and looking for row {}", db.table_relation[table_id as usize -1].table.t_name, object_id); 
@@ -290,6 +295,29 @@ fn drop_helper (db: & mut Database, table_id: i32, object_id: i64) -> HashMap<i3
     return hash; 
 }
 static mut test : i32 = 0; 
+// **************************** I DID NOT USE THIS, WAS JUST TESTING SOME SHIT REEEE
+// fn recursive_drop(db: & mut Database, table_id: i32, object_id: i64) {
+//     for tb in  &db.table_relation {
+//         if tb.table.t_id == table_id {
+//             for row in &tb.rows {
+//                 let mut this_index = 0;
+//                 if row.pk == object_id {
+//                     let mut index = 0; 
+//                     for col in &tb.table.t_cols {
+//                         if col.c_type == Value::FOREIGN {
+//                             // recursive_drop(db, col.c_ref, row.val[index]::val()); 
+//                         }
+//                         index = index + 1; 
+//                     }
+//                     // db.table_relation[table_id as usize - 1].rows.remove(this_index); 
+//                     break; 
+//                 }
+//                 this_index = this_index + 1; 
+//                 break;
+//             }
+//         }
+//     }
+// }
 
 fn handle_drop(db: & mut Database, table_id: i32, object_id: i64) 
     -> Result<Response, i32>
@@ -327,6 +355,7 @@ fn handle_drop(db: & mut Database, table_id: i32, object_id: i64)
         return Err(Response::NOT_FOUND); 
     }
     println!("Dropping table_id: {}, with name: {}, and row id: {} and rows {}", table_id, db.table_relation[table_id as usize -1].table.t_name, object_id, db.table_relation[table_id as usize -1].rows.len());
+    
     // unsafe {
     //     if test == 14 {
     //         println!("fakeee");
@@ -430,7 +459,8 @@ fn handle_drop(db: & mut Database, table_id: i32, object_id: i64)
     println!("delete: row id {} originally called {}", delete_this, object_id);
     db.table_relation[table_id as usize - 1].rows.remove(delete_this as usize - 1); 
     return Ok(Response::Drop)
-}
+} 
+*/
 impl ToString for Row {
     fn to_string(&self) -> String {
         let mut s = format!("{}\t{}", self.pk, self.version);
@@ -466,17 +496,27 @@ fn handle_get(db: & Database, table_id: i32, object_id: i64)
                 println!("get not found");
                 return Err(Response::NOT_FOUND);
             }
-
             // THIS IS THE ISSUE tb.rows.len() 
-            if object_id > tb.rows[0].val.len() as i64 + 1 || object_id < 0 {
+            if object_id < 0 {
                 println!("get not found 2 ibj {} length {}", object_id, tb.rows.len());
                 return Err(Response::NOT_FOUND);
             }
+            // let mut delete_this = 9999999999; 
+            let mut index = 1;
+            for row in &tb.rows {
+                if row.pk == object_id {
+                    return Ok(Response::Get(row.version, &row.val));
+                    // delete_this = index;
+                    break; 
+                }
+                index = index + 1; 
+            }
+            
 
             for row in &tb.rows {
                 if row.pk == object_id {
                     println!("leaving get id {}, version {} values {:?}", object_id, row.version, row.val);
-                    return Ok(Response::Get(row.version, &row.val));
+                    
                 }
             }
             break; 
