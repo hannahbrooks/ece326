@@ -349,17 +349,19 @@ pub trait Network : io::Write + io::Read {
 
     /* receive a packet from client */
     fn receive(&mut self) -> io::Result<Request> { 
+        // println!("in receive");
         let mut buffer : [u8; ByteArray::MAX_PACKET_SIZE] = unsafe {
             mem::MaybeUninit::uninit().assume_init()
         };
-      
         self.read(&mut buffer)?;
         let mut packet = ByteArray::from(&buffer);
         let cmd = packet.read()?;
+        // println!("read packet good, command is {}", cmd);
         use self::Command::*;
-       
+        let table_id_thing = packet.read()?;
+        // println!("table id is {}", table_id_thing);
         Ok(Request{ 
-            table_id: packet.read()?, 
+            table_id: table_id_thing, 
             command: match cmd {
                 Request::INSERT => {
                     let mut vec = Vec::<Value>::new();
@@ -387,6 +389,7 @@ pub trait Network : io::Write + io::Read {
                     Drop(packet.read()?)
                 },
                 Request::GET => {
+                    // println!("get packet");
                     Get(packet.read()?)
                 },
                 Request::SCAN => {

@@ -1,0 +1,309 @@
+
+-------- /nfs/ug/cad/cad2/ece326f/tester/scripts/lab3-01-insert.py --------
+
+[
+1. User:
+    1. firstName : string
+    2. lastName : string
+    3. height : float
+    4. age : integer
+, 
+2. Account:
+    1. user : foreign(1)
+    2. type : string
+    3. balance : float
+, 
+3. Student:
+    1. user : foreign(1)
+    2. tcard : integer
+, 
+4. Assignment:
+    1. student : foreign(3)
+    2. grade : string
+, 
+5. Debt:
+    1. owing : foreign(2)
+    2. collector : foreign(1)
+    3. amount : float
+]
+Listening: TcpListener { addr: 127.0.0.1:6638, fd: 3 }
+Connected to 127.0.0.1:41790
+Disconnected.
+
+-------- /nfs/ug/cad/cad2/ece326f/tester/scripts/lab3-02-update.py --------
+
+[
+1. User:
+    1. firstName : string
+    2. lastName : string
+    3. height : float
+    4. age : integer
+, 
+2. Account:
+    1. user : foreign(1)
+    2. type : string
+    3. balance : float
+, 
+3. Student:
+    1. user : foreign(1)
+    2. tcard : integer
+, 
+4. Assignment:
+    1. student : foreign(3)
+    2. grade : string
+, 
+5. Debt:
+    1. owing : foreign(2)
+    2. collector : foreign(1)
+    3. amount : float
+]
+Listening: TcpListener { addr: 127.0.0.1:1391, fd: 3 }
+Connected to 127.0.0.1:50050
+Disconnected.
+
+-------- /nfs/ug/cad/cad2/ece326f/tester/scripts/lab3-03-drop.py --------
+
+[
+1. User:
+    1. firstName : string
+    2. lastName : string
+    3. height : float
+    4. age : integer
+, 
+2. Account:
+    1. user : foreign(1)
+    2. type : string
+    3. balance : float
+, 
+3. Student:
+    1. user : foreign(1)
+    2. tcard : integer
+, 
+4. Assignment:
+    1. student : foreign(3)
+    2. grade : string
+, 
+5. Debt:
+    1. owing : foreign(2)
+    2. collector : foreign(1)
+    3. amount : float
+]
+Listening: TcpListener { addr: 127.0.0.1:8922, fd: 3 }
+Connected to 127.0.0.1:36926
+Disconnected.
+
+-------- /nfs/ug/cad/cad2/ece326f/tester/scripts/lab3-04-scan.py --------
+
+[
+1. User:
+    1. firstName : string
+    2. lastName : string
+    3. height : float
+    4. age : integer
+, 
+2. Account:
+    1. user : foreign(1)
+    2. type : string
+    3. balance : float
+, 
+3. Student:
+    1. user : foreign(1)
+    2. tcard : integer
+, 
+4. Assignment:
+    1. student : foreign(3)
+    2. grade : string
+, 
+5. Debt:
+    1. owing : foreign(2)
+    2. collector : foreign(1)
+    3. amount : float
+]
+Listening: TcpListener { addr: 127.0.0.1:3587, fd: 3 }
+Connected to 127.0.0.1:40024
+Disconnected.
+
+-------- /nfs/ug/cad/cad2/ece326f/tester/scripts/lab3-05-stress.py --------
+
+[
+1. User:
+    1. firstName : string
+    2. lastName : string
+    3. height : float
+    4. age : integer
+, 
+2. Account:
+    1. user : foreign(1)
+    2. type : string
+    3. balance : float
+, 
+3. Student:
+    1. user : foreign(1)
+    2. tcard : integer
+, 
+4. Assignment:
+    1. student : foreign(3)
+    2. grade : string
+, 
+5. Debt:
+    1. owing : foreign(2)
+    2. collector : foreign(1)
+    3. amount : float
+]
+Listening: TcpListener { addr: 127.0.0.1:9621, fd: 3 }
+Connected to 127.0.0.1:56970
+Disconnected.
+
+-------- /nfs/ug/cad/cad2/ece326f/tester/scripts/lab3-06-parallel.py --------
+
+[
+1. Company:
+    1. name : string
+    2. president : string
+    3. balance : float
+    4. numEmployee : integer
+, 
+2. Order:
+    1. product : string
+    2. customer : string
+    3. cost : float
+    4. quantity : integer
+, 
+3. Employee:
+    1. firstName : string
+    2. lastName : string
+    3. salary : float
+    4. numYears : integer
+, 
+4. Transaction:
+    1. buyer : string
+    2. agent : string
+    3. payment : float
+    4. timestamp : integer
+]
+Listening: TcpListener { addr: 127.0.0.1:4317, fd: 3 }
+Connected to 127.0.0.1:49344
+Connection error: Custom { kind: Other, error: "Invalid command" }
+
+-------- /nfs/ug/cad/cad2/ece326f/tester/scripts/lab3-07-speedup.py --------
+
+[
+1. Company:
+    1. name : string
+    2. president : string
+    3. balance : float
+    4. numEmployee : integer
+, 
+2. Order:
+    1. product : string
+    2. customer : string
+    3. cost : float
+    4. quantity : integer
+, 
+3. Employee:
+    1. firstName : string
+    2. lastName : string
+    3. salary : float
+    4. numYears : integer
+, 
+4. Transaction:
+    1. buyer : string
+    2. agent : string
+    3. payment : float
+    4. timestamp : integer
+]
+Listening: TcpListener { addr: 127.0.0.1:3900, fd: 3 }
+Connected to 127.0.0.1:55394
+Disconnected.
+
+-------- /nfs/ug/cad/cad2/ece326f/tester/scripts/lab3-07-speedup.py --------
+
+[
+1. Company:
+    1. name : string
+    2. president : string
+    3. balance : float
+    4. numEmployee : integer
+, 
+2. Order:
+    1. product : string
+    2. customer : string
+    3. cost : float
+    4. quantity : integer
+, 
+3. Employee:
+    1. firstName : string
+    2. lastName : string
+    3. salary : float
+    4. numYears : integer
+, 
+4. Transaction:
+    1. buyer : string
+    2. agent : string
+    3. payment : float
+    4. timestamp : integer
+]
+Listening: TcpListener { addr: 127.0.0.1:8398, fd: 3 }
+Connected to 127.0.0.1:35932
+
+-------- /nfs/ug/cad/cad2/ece326f/tester/scripts/lab3-08-limit.py --------
+
+[
+1. User:
+    1. firstName : string
+    2. lastName : string
+    3. height : float
+    4. age : integer
+, 
+2. Account:
+    1. user : foreign(1)
+    2. type : string
+    3. balance : float
+, 
+3. Student:
+    1. user : foreign(1)
+    2. tcard : integer
+, 
+4. Assignment:
+    1. student : foreign(3)
+    2. grade : string
+, 
+5. Debt:
+    1. owing : foreign(2)
+    2. collector : foreign(1)
+    3. amount : float
+]
+Listening: TcpListener { addr: 127.0.0.1:3476, fd: 3 }
+Connected to 127.0.0.1:49210
+Connection error: Custom { kind: Other, error: "Invalid command" }
+Connected to 127.0.0.1:49212
+Connection error: Os { code: 32, kind: BrokenPipe, message: "Broken pipe" }
+
+-------- /nfs/ug/cad/cad2/ece326f/tester/scripts/lab3-09-synch.py --------
+
+[
+1. Artist:
+    1. firstName : string
+    2. lastName : string
+    3. age : integer
+, 
+2. Publisher:
+    1. name : string
+, 
+3. Album:
+    1. name : string
+    2. publish : foreign(2)
+    3. artist1 : foreign(1)
+    4. artist2 : foreign(1)
+    5. price : float
+, 
+4. Song:
+    1. name : string
+    2. album : foreign(3)
+    3. likes : integer
+]
+Listening: TcpListener { addr: 127.0.0.1:6993, fd: 3 }
+Connected to 127.0.0.1:41640
+Connection error: Custom { kind: Other, error: "Invalid command" }
+Connected to 127.0.0.1:41642
+Connection error: Os { code: 32, kind: BrokenPipe, message: "Broken pipe" }
