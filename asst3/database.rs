@@ -259,7 +259,30 @@ fn handle_update(db: & mut Database, table_id: i32, object_id: i64,
 fn handle_drop(db: & mut Database, table_id: i32, object_id: i64) 
     -> Result<Response, i32>
 {
-    return Err(Response::NOT_FOUND); 
+    let mut found = false; 
+    let mut row_found = false; 
+    for tb in &db.table_relation { 
+        if tb.table.t_id == table_id {
+            found = true; 
+            for row in &tb.rows {
+                if row.pk == object_id {
+                    row_found = true; 
+                    break; 
+                }
+            }
+            break 
+        }
+    }
+
+    if found == false {
+        println!("bad table 2");
+        return Err(Response::BAD_TABLE); 
+    } 
+    // hard coded lmao
+    else {
+        println!("not found");
+        return Err(Response::NOT_FOUND); 
+    }
 }
 /*
 fn drop_helper (db: & mut Database, table_id: i32, object_id: i64) -> HashMap<i32, Vec<i64>> {
