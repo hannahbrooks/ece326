@@ -1,1 +1,1 @@
-# ece326
+# Labs for ECE326
